@@ -17,3 +17,4 @@ public interface UserRepository {
     Optional<Address> findAddressById(Long userId, Long addressId);
     Optional<Address> updateAddress(Long userId, Long addressId, Address updatedAddress);
     Long generateNewAddressId();
+}

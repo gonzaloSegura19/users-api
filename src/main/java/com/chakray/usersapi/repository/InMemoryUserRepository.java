@@ -2,17 +2,18 @@ package com.chakray.usersapi.repository;
 
 import com.chakray.usersapi.model.Address;
 import com.chakray.usersapi.model.User;
-import com.chakray.usersapi.util.PasswordHasher;
-import org.springframework.stereotype.Repository;
+import com.chakray.usersapi.util.PasswordHasher; // Asegúrate de que esta clase exista
 import jakarta.annotation.PostConstruct;
+import org.springframework.stereotype.Repository;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 @Repository
 public class InMemoryUserRepository implements UserRepository {
@@ -23,9 +24,11 @@ public class InMemoryUserRepository implements UserRepository {
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
     private final ZoneId ukZone = ZoneId.of("Europe/London");
-
     @PostConstruct
     public void init() {
+        users.clear();
+        userIdCounter.set(125);
+        addressIdCounter.set(3);
         // Usuario 1
         List<Address> user1Addresses = new ArrayList<>();
         user1Addresses.add(new Address(1L, "workaddress", "street No. 1", "UK"));
@@ -34,7 +37,7 @@ public class InMemoryUserRepository implements UserRepository {
                 123L,
                 "user1@mail.com",
                 "user1",
-                PasswordHasher.hashSha1("123456"),
+                PasswordHasher.hashSha1("123456"), // Contraseña hasheada
                 "01-01-2024 00:00:00",
                 user1Addresses
         ));
@@ -46,8 +49,8 @@ public class InMemoryUserRepository implements UserRepository {
                 124L,
                 "user2@mail.com",
                 "user2",
-                PasswordHasher.hashSha1("password123"),
-                LocalDateTime.now(ukZone).format(formatter),
+                PasswordHasher.hashSha1("password123"), // Contraseña hasheada
+                LocalDateTime.now(ukZone).format(formatter), // Fecha actual
                 user2Addresses
         ));
 
@@ -57,16 +60,15 @@ public class InMemoryUserRepository implements UserRepository {
                 125L,
                 "user3@mail.com",
                 "user3",
-                PasswordHasher.hashSha1("securepass"),
-                LocalDateTime.now(ukZone).format(formatter),
+                PasswordHasher.hashSha1("securepass"), // Contraseña hasheada
+                LocalDateTime.now(ukZone).format(formatter), // Fecha actual
                 user3Addresses
         ));
     }
 
     @Override
     public List<User> findAll() {
-
-        return new ArrayList<>(users);
+        return Collections.unmodifiableList(users);
     }
 
     @Override
@@ -78,10 +80,13 @@ public class InMemoryUserRepository implements UserRepository {
 
     @Override
     public User save(User user) {
-        user.setId(userIdCounter.incrementAndGet());
+        if (user.getId() == null) {
+            user.setId(userIdCounter.incrementAndGet());
+        }
         user.setPassword(PasswordHasher.hashSha1(user.getPassword()));
         user.setCreatedAt(LocalDateTime.now(ukZone).format(formatter));
 
+        // Asignar IDs a las direcciones si son nuevas
         if (user.getAddresses() != null) {
             user.getAddresses().forEach(address -> {
                 if (address.getId() == null) {
@@ -100,23 +105,17 @@ public class InMemoryUserRepository implements UserRepository {
 
     @Override
     public Optional<User> update(Long id, User updatedUser) {
-        Optional<User> existingUserOpt = users.stream()
-                .filter(user -> user.getId().equals(id))
-                .findFirst();
-
+        Optional<User> existingUserOpt = findById(id);
         if (existingUserOpt.isPresent()) {
             User existingUser = existingUserOpt.get();
-            if (updatedUser.getEmail() != null) existingUser.setEmail(updatedUser.getEmail());
-            if (updatedUser.getName() != null) existingUser.setName(updatedUser.getName());
-            if (updatedUser.getPassword() != null) existingUser.setPassword(PasswordHasher.hashSha1(updatedUser.getPassword()));
-
-            if (updatedUser.getAddresses() != null) {
-                updatedUser.getAddresses().forEach(address -> {
-                    if (address.getId() == null) {
-                        address.setId(generateNewAddressId());
-                    }
-                });
-                existingUser.setAddresses(updatedUser.getAddresses());
+            if (updatedUser.getEmail() != null) {
+                existingUser.setEmail(updatedUser.getEmail());
+            }
+            if (updatedUser.getName() != null) {
+                existingUser.setName(updatedUser.getName());
+            }
+            if (updatedUser.getPassword() != null) {
+                existingUser.setPassword(PasswordHasher.hashSha1(updatedUser.getPassword()));
             }
 
             return Optional.of(existingUser);
@@ -126,42 +125,41 @@ public class InMemoryUserRepository implements UserRepository {
 
     @Override
     public Optional<List<Address>> findAddressesByUserId(Long userId) {
-        return users.stream()
-                .filter(user -> user.getId().equals(userId))
+        return findById(userId)
                 .map(User::getAddresses)
-                .findFirst();
+                .map(ArrayList::new);
     }
 
     @Override
     public Optional<Address> findAddressById(Long userId, Long addressId) {
-        return users.stream()
-                .filter(user -> user.getId().equals(userId))
-                .flatMap(user -> user.getAddresses().stream())
-                .filter(address -> address.getId().equals(addressId))
-                .findFirst();
+        return findById(userId)
+                .flatMap(user -> user.getAddresses().stream()
+                        .filter(address -> address.getId().equals(addressId))
+                        .findFirst());
     }
 
     @Override
     public Optional<Address> updateAddress(Long userId, Long addressId, Address updatedAddress) {
-        Optional<User> userOpt = users.stream()
-                .filter(user -> user.getId().equals(userId))
-                .findFirst();
-
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
+        return findById(userId).flatMap(user -> {
             Optional<Address> existingAddressOpt = user.getAddresses().stream()
-                    .filter(address -> address.getId().equals(addressId))
+                    .filter(addr -> addr.getId().equals(addressId))
                     .findFirst();
 
             if (existingAddressOpt.isPresent()) {
                 Address existingAddress = existingAddressOpt.get();
-                if (updatedAddress.getName() != null) existingAddress.setName(updatedAddress.getName());
-                if (updatedAddress.getStreet() != null) existingAddress.setStreet(updatedAddress.getStreet());
-                if (updatedAddress.getCountryCode() != null) existingAddress.setCountryCode(updatedAddress.getCountryCode());
+                if (updatedAddress.getName() != null) {
+                    existingAddress.setName(updatedAddress.getName());
+                }
+                if (updatedAddress.getStreet() != null) {
+                    existingAddress.setStreet(updatedAddress.getStreet());
+                }
+                if (updatedAddress.getCountryCode() != null) {
+                    existingAddress.setCountryCode(updatedAddress.getCountryCode());
+                }
                 return Optional.of(existingAddress);
             }
-        }
-        return Optional.empty();
+            return Optional.empty();
+        });
     }
 
     @Override
