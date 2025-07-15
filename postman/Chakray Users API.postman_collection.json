@@ -1,0 +1,205 @@
+{
+  "info": {
+    "_postman_id": "a9b0c1d2-e3f4-5678-90ab-cdef12345678",
+    "name": "Chakray Users API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_collection_id": "YOUR_COLLECTION_ID_HERE"
+  },
+  "item": [
+    {
+      "name": "Get All Users",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/users",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "users"
+          ]
+        },
+        "description": "Retorna una lista de todos los usuarios, con la opción de ordenamiento."
+      },
+      "response": []
+    },
+    {
+      "name": "Get All Users (Sorted by Email)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/users?sortedBy=email",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "users"
+          ],
+          "query": [
+            {
+              "key": "sortedBy",
+              "value": "email"
+            }
+          ]
+        },
+        "description": "Retorna una lista de usuarios ordenada por email."
+      },
+      "response": []
+    },
+    {
+      "name": "Get User Addresses by User ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/users/123/addresses",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "users",
+            "123",
+            "addresses"
+          ]
+        },
+        "description": "Retorna una lista de direcciones para un usuario específico por su ID. (Cambia 123 por un ID de usuario existente)"
+      },
+      "response": []
+    },
+    {
+      "name": "Create New User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"email\": \"new.user@example.com\",\n    \"name\": \"New User Example\",\n    \"password\": \"securepassword123\",\n    \"addresses\": [\n        {\n            \"name\": \"Example Home Address\",\n            \"street\": \"123 Example St\",\n            \"countryCode\": \"MX\"\n        },\n        {\n            \"name\": \"Example Work Address\",\n            \"street\": \"456 Demo Ave\",\n            \"countryCode\": \"CA\"\n        }\n    ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/users",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "users"
+          ]
+        },
+        "description": "Almacena un nuevo usuario en el array. El ID del usuario y de las direcciones se generarán automáticamente. La contraseña se hasheará y no se retornará."
+      },
+      "response": []
+    },
+    {
+      "name": "Update User Address",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"Updated Work Address\",\n    \"street\": \"New Street 100\",\n    \"countryCode\": \"ES\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/users/123/addresses/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "users",
+            "123",
+            "addresses",
+            "1"
+          ]
+        },
+        "description": "Actualiza una dirección específica de un usuario. (Cambia 123 por el ID del usuario y 1 por el ID de la dirección a actualizar)"
+      },
+      "response": []
+    },
+    {
+      "name": "Update User Attribute (Partial Update)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"User One Updated Name\",\n    \"email\": \"user1.new@mail.com\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/users/123",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "users",
+            "123"
+          ]
+        },
+        "description": "Actualiza uno o varios atributos de un usuario por su ID. (Cambia 123 por un ID de usuario existente)"
+      },
+      "response": []
+    },
+    {
+      "name": "Delete User by ID",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/users/126",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "users",
+            "126"
+          ]
+        },
+        "description": "Elimina un usuario del array por su ID. (Cambia 126 por un ID de usuario existente, idealmente uno que hayas creado con POST)"
+      },
+      "response": []
+    }
+  ]
+}
